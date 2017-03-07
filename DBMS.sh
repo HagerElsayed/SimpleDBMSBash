@@ -147,11 +147,15 @@ selectSpecificColsFromTable() {
   fi
 }
 chooseAggregateFunction() {
-  read -p "Please Enter The Aggregate Function you want to Apply (sum-avg-): " funcName;
+  read -p "Please Enter The Aggregate Function you want to Apply (sum-avg-max-min): " funcName;
   if [[ "$funcName" == "sum" ]]; then
     sumSpecificColumn;
   elif [[ "$funcName" == "avg" ]]; then
     avgSpecificColumn;
+  elif [[ "$funcName" == "max" ]]; then
+    maxSpecificColumn;
+  elif [[ "$funcName" == "min" ]]; then
+    minSpecificColumn;
   fi
   read -p "Do you want to apply another function? (Y/N) " input
   if [ $input = Y -o $input = y ]; then
@@ -183,6 +187,34 @@ avgSpecificColumn() {
     read -p "Do you want to sum another column? (Y/N) " input
     if [ $input = Y -o $input = y ]; then
       avgSpecificColumn;
+    fi
+  fi 
+}
+maxSpecificColumn() {
+  read -p "Please Enter The Name of Database : " dbName;
+  if [ -d $dbName ]
+    then
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$dbName/$tableName"
+    read -p "Please Enter The Column Name you want to get Max of : " colName;
+    awk -F';'  'BEGIN {max=-999999} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if($ix[colName]>max) { max=$ix[colName]; row=$0 } } END { if(type!="int") { print colName" is Not an Integer!" } else { print "max of "colName" = "max; print row } }' colName=$colName $tablePath 
+    read -p "Do you want to get max of another column? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      maxSpecificColumn;
+    fi
+  fi 
+}
+minSpecificColumn() {
+  read -p "Please Enter The Name of Database : " dbName;
+  if [ -d $dbName ]
+    then
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$dbName/$tableName"
+    read -p "Please Enter The Column Name you want to get Min of : " colName;
+    awk -F';'  'BEGIN {min=999999} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if($ix[colName]<min) { min=$ix[colName]; row=$0 } } END { if(type!="int") { print colName" is Not an Integer!" } else { print "min of "colName" = "min; print row } }' colName=$colName $tablePath 
+    read -p "Do you want to get min of another column? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      minSpecificColumn;
     fi
   fi 
 }  

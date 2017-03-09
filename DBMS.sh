@@ -6,76 +6,169 @@ function menu {
   while true
   do
     clear	
-    echo "1) Create Database";
-    echo "2) Rename Database";
-    echo "3) Drop Database";
-    echo "4) Create New Table";
-    echo "5) Drop Table";
-    echo "6) Update Table";
-    echo "7) Delete From Table";
-    echo "8) Select All From Table";
-    echo "9) Insert Into Table";
-    echo "10) Select From Table Under Specific Condition";
-    echo "11) Select Specific Columns From Table";
-    echo "12) Apply Aggregate Function to Specific Column in Table";
+    startMenu;
+    startMenu(){
+      clear
+       echo "##############################################################"
+       echo "#         Welcome To Our Simple DBMS With Bash Script        #"
+       echo "#              BY:Hager Elsayed & Amira Elkholy              #"
+       echo "#             OPen Source Track Mansoura Branch              #"
+       echo "##############################################################"
 
-    read -p "please enter your Choice : ";
-
-    case $REPLY in
+      echo "===================="
+      echo "1) Manage Database";
+      echo "2) Manage Tables";
+   
+      echo "3) Exit";
+      echo "===================="
+      read -p "please enter your Choice : ";
+      case $REPLY in
       1)
-createDB;
-;;
+        mangeDBMenu;
+        ;;
+      2)
+        manageTable
+        ;;
+     
+      3)
+        break
+        ;;
+      
+      *)
+        echo "not found";
+        ;;
+      esac
 
-2) 
-renameDB;
-;;
+    }
+    mangeDBMenu(){
+      clear
+      echo "===================="
+      echo "1) Create Database";
+      echo "2) Rename Database";
+      echo "3) Drop Database";
+      echo "4) Back";
+      echo "===================="
+      read -p "please enter your Choice : ";
+      case $REPLY in
+      1)
+      createDB;
+      ;;
 
-3)
-dropDatabase;
-;;
+      2) 
+      renameDB;
+      ;;
 
-4)
-createTable;
-;;
+      3)
+      dropDatabase;
+      ;;
+      4)
+      
+      ;;
+      *)
+        echo "not found";
+        ;;
+      esac
 
-5)
-dropTable;
-;;
+    }
+    manageTable(){
+      clear
+      echo "===================="
+      echo "1) Create New Table";
+      echo "2) Drop Table";
+      echo "3) Update Table";
+      echo "4) Delete From Table";
+      echo "5) Select From Table";
+      echo "6) Insert Into Table";
+      echo "7) Back";
+      echo "===================="
+      read -p "please enter your Choice : ";
+      case $REPLY in
+        1)
+        createTable;
+        ;;
 
-7)
-deleteFromTable;
-;;
+        2)
+        dropTable;
+        ;;
 
-8)
-selectAllFromTable;
-;;
+        3)
+         updateTable;
+        ;;
 
-9)
-insertIntoTable;
-;;
+        4)
+        deleteFromTable;
+        ;;
 
-10)
-selectFromTableUnderCondition;
-;;
+        5)
+        selectMenu;
+        ;;
 
-11)
-selectSpecificColsFromTable;
-;;
+        6)
+        insertIntoTable;
+        ;;
+        7)
+        
+        ;;
+        *)
+        echo "not found";
+        ;;
+        esac
 
-12)
-chooseAggregateFunction;
-;;
+    }
 
-*)
-echo "not found";
-;;
+    selectMenu(){
+      clear
+      echo "===================="
+      echo "1) Select All From Table";
+      echo "2) Select From Table Under Specific Condition";
+      echo "3) Select Specific Columns From Table";
+      echo "4) Apply Aggregate Function to Specific Column in Table";
+      echo "5) Back"
+      echo "===================="
+      read -p "please enter your Choice : ";
+      case $REPLY in
+        1)
+        selectAllFromTable;
+        ;;
 
-esac
+        2)
+        selectFromTableUnderCondition;
+        ;;
+
+        3)
+        selectSpecificColsFromTable;
+        ;;
+
+        4)
+        chooseAggregateFunction;
+        ;;
+        5)
+        
+        ;;
+
+        *)
+        echo "not found";
+        ;;
+
+
+      esac
+    }
+
 done
 
-}
 
+}
+showDatabases() {
+    clear
+    ls -d */ | awk 'BEGIN{FS=" "} { print "- "$1 }';
+}
+showTables() {
+  clear
+    ls -f */| awk 'BEGIN{FS=" "} { print "- "$1 }';
+}
 createDB(){
+  clear
+  echo "====== Creating New Database ============"
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
   then
@@ -89,6 +182,9 @@ createDB(){
 
 }
 renameDB(){
+  clear
+  showDatabases
+   echo "====== Renaming Database ============"
   read -p "Choose Database : " oldDbName;
   if [ -d $oldDbName ]
     then
@@ -100,9 +196,12 @@ renameDB(){
  fi
 }
 selectAllFromTable(){
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     awk -F';' '{print $0}' $tablePath 
@@ -112,9 +211,12 @@ selectAllFromTable(){
   fi
 }
 selectFromTableUnderCondition() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name : " colName;
@@ -127,9 +229,12 @@ selectFromTableUnderCondition() {
   fi
 }
 selectSpecificColsFromTable() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Number of Columns you want to select : " colsNumber;
@@ -151,6 +256,8 @@ selectSpecificColsFromTable() {
   fi
 }
 chooseAggregateFunction() {
+  clear
+  #showTables
   read -p "Please Enter The Aggregate Function you want to Apply (sum-avg-max-min-count): " funcName;
   if [[ "$funcName" == "sum" ]]; then
     sumSpecificColumn;
@@ -174,9 +281,12 @@ chooseAggregateFunction() {
   fi
 }
 sumSpecificColumn() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to Sum : " colName;
@@ -188,9 +298,12 @@ sumSpecificColumn() {
   fi 
 }
 avgSpecificColumn() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to Get Average of : " colName;
@@ -202,9 +315,12 @@ avgSpecificColumn() {
   fi 
 }
 maxSpecificColumn() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to get Max of : " colName;
@@ -216,9 +332,12 @@ maxSpecificColumn() {
   fi 
 }
 minSpecificColumn() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to get Min of : " colName;
@@ -230,9 +349,12 @@ minSpecificColumn() {
   fi 
 }
 countSpecificColumn() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to count : " colName;
@@ -244,9 +366,12 @@ countSpecificColumn() {
   fi 
 }
 countSpecificColumnUnderCondition() {
+  clear
+  showDatabases
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
     then
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to count : " colName;
@@ -258,6 +383,32 @@ countSpecificColumnUnderCondition() {
     fi
   fi
 }  
+
+
+updateTable(){
+     clear
+      showDatabases
+      read -p "Please Enter The Name of Database : " dbName;
+      if [ -d $dbName ]
+      then
+          showTables
+         read -p "Please Enter The Name of Table : " tableName;
+         tablePath="$dbName/$tableName"
+         read -p "Please Enter The Column Name : " colName;
+         read -p "Please Enter The Condition : " condition;
+         read -p "Please Enter Column Name you want to change : " updateColName;
+         read -p "Please Enter The New Value for $updateColName : " newValue;
+
+         awk -F';'  'BEGIN { ORS="" } NR==1 {for (i=1;i<=NF;i++) {split($i,a,".");t=a[1];ix[t] = i} print $0"\n"} NR>1 {if($ix[colName]==cond){$ix[updateColName]=newValue} for (i=1;i<=NF;i++){if(i==NF){print $i"\n"}else{print $i";"}}}' colName=$colName cond=$condition updateColName=$updateColName newValue=$newValue $tablePath > $dbName/try
+         rm  $tablePath;
+         mv $dbName/try $dbName/$tableName;
+         echo "Your Column is updated Successfully"
+        read -p "Do you want to update another record? (Y/N)" input
+        if [ $input = Y -o $input = y ]; then
+          updateTable;
+        fi
+      fi
+     }
 deleteFromTable(){
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
@@ -276,7 +427,9 @@ deleteFromTable(){
   fi
 }
 dropTable(){
+  showDatabases
   read -p "Choose Database : " dbName;
+  showTables
   read -p "Please Enter The Name of Table : " tableName;
   rm  $dbName/$tableName;
   echo "Your Table '$dbName.$tableName' is Deleted ";
@@ -290,12 +443,12 @@ print(){
 
 function dropDatabase (){
   clear
-
+  showDatabases
   read -p "Choose Database : " dbName;
 # rm -r $dbName;
 echo "You are going to drop $dbName Database ,Are you Sure? (Y/N) "
 read confirm
-if [ $confirm = "y" ]
+if [ $confirm = "y" -o $confirm="Y"]
   then
   if [ -d $db ] && rm -r $dbName
     then
@@ -308,12 +461,17 @@ fi
 }
 
 function insertIntoTable {
+  clear
+  showDatabases
+  #showTables
   insert="Y"
   while [ $insert = "Y" -o $insert = "y" ]; do
-    clear;
+    #clear;
     newRecord=""
     read -p "Choose Database : " dbName;
+    showTables
     read -p "Please Enter The Name of Table : " tableName;
+
     tablePath="$PWD/$dbName/$tableName"
     print "Inserting new record in $tablePath table"
     tableHeader=$(head -1 "$tablePath");
@@ -378,6 +536,7 @@ function createColumns {
 
 function createTable {
   clear;
+  showDatabases
   read -p "Choose Database : " dbName;
   print "$dbName : Create New Table"
   echo -n "Enter table name: "

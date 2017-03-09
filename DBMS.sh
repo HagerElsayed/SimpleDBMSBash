@@ -1,4 +1,6 @@
 #!/bin/bash
+#dbDir="$PWD"
+
 function menu {
 
   while true
@@ -20,55 +22,55 @@ function menu {
     read -p "please enter your Choice : ";
 
     case $REPLY in
-    1)
-    createDB;
-    ;;
+      1)
+createDB;
+;;
 
-    2) 
-    renameDB;
-    ;;
+2) 
+renameDB;
+;;
 
-    3)
-    dropDatabase;
-    ;;
+3)
+dropDatabase;
+;;
 
-    4)
-    createTable;
-    ;;
+4)
+createTable;
+;;
 
-    5)
-    dropTable;
-    ;;
+5)
+dropTable;
+;;
 
-    7)
-    deleteFromTable;
-    ;;
+7)
+deleteFromTable;
+;;
 
-    8)
-    selectAllFromTable;
-    ;;
+8)
+selectAllFromTable;
+;;
 
-    9)
-    insertIntoTable;
-    ;;
+9)
+insertIntoTable;
+;;
 
-    10)
-    selectFromTableUnderCondition;
-    ;;
+10)
+selectFromTableUnderCondition;
+;;
 
-    11)
-    selectSpecificColsFromTable;
-    ;;
+11)
+selectSpecificColsFromTable;
+;;
 
-    12)
-    chooseAggregateFunction;
-    ;;
+12)
+chooseAggregateFunction;
+;;
 
-    *)
-    echo "not found";
-    ;;
+*)
+echo "not found";
+;;
 
-  esac
+esac
 done
 
 }
@@ -76,10 +78,12 @@ done
 createDB(){
   read -p "Please Enter The Name of Database : " dbName;
   if [ -d $dbName ]
-   then
+  then
    print "The Database Already Exists";
- else
+  else
    mkdir $dbName;
+   mkdir $dbName/.config;
+   touch $dbName/.config/$dbName;
    print "Your Database '$dbName' is created";
  fi
 
@@ -138,16 +142,16 @@ selectSpecificColsFromTable() {
         cols+="$colName"","
       fi
     done
-   echo $cols;
-   awk -F';' -v cols="$cols" 'BEGIN {split(cols,out,",")} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i}} NR>1 {for (i=1; i<=numCols; i++) {if(i==numCols) {printf $ix[out[i]]"\n"} else {printf $ix[out[i]]","} } }' numCols=$colsNumber $tablePath 
-   read -p "Do you want to select other columns? (Y/N) " input
-   if [ $input = Y -o $input = y ]; then
+    echo $cols;
+    awk -F';' -v cols="$cols" 'BEGIN {split(cols,out,",")} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i}} NR>1 {for (i=1; i<=numCols; i++) {if(i==numCols) {printf $ix[out[i]]"\n"} else {printf $ix[out[i]]","} } }' numCols=$colsNumber $tablePath 
+    read -p "Do you want to select other columns? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
       selectSpecificColsFromTable;
     fi
   fi
 }
 chooseAggregateFunction() {
-  read -p "Please Enter The Aggregate Function you want to Apply (sum-avg-max-min): " funcName;
+  read -p "Please Enter The Aggregate Function you want to Apply (sum-avg-max-min-count): " funcName;
   if [[ "$funcName" == "sum" ]]; then
     sumSpecificColumn;
   elif [[ "$funcName" == "avg" ]]; then
@@ -156,6 +160,13 @@ chooseAggregateFunction() {
     maxSpecificColumn;
   elif [[ "$funcName" == "min" ]]; then
     minSpecificColumn;
+  elif [[ "$funcName" == "count" ]]; then
+    read -p "Do you want to count under condition? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      countSpecificColumnUnderCondition;
+    else
+      countSpecificColumn;
+    fi
   fi
   read -p "Do you want to apply another function? (Y/N) " input
   if [ $input = Y -o $input = y ]; then
@@ -197,7 +208,7 @@ maxSpecificColumn() {
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to get Max of : " colName;
-    awk -F';'  'BEGIN {max=-999999} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if($ix[colName]>max) { max=$ix[colName]; row=$0 } } END { if(type!="int") { print colName" is Not an Integer!" } else { print "max of "colName" = "max; print row } }' colName=$colName $tablePath 
+    awk -F';'  ' NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if(NR==2){max=$ix[colName]; row=$0} else{if($ix[colName]>max) { max=$ix[colName]; row=$0 }} } END { if(type!="int") { print colName" is Not an Integer!" } else { print "max of "colName" = "max; print row } }' colName=$colName $tablePath 
     read -p "Do you want to get max of another column? (Y/N) " input
     if [ $input = Y -o $input = y ]; then
       maxSpecificColumn;
@@ -211,47 +222,76 @@ minSpecificColumn() {
     read -p "Please Enter The Name of Table : " tableName;
     tablePath="$dbName/$tableName"
     read -p "Please Enter The Column Name you want to get Min of : " colName;
-    awk -F';'  'BEGIN {min=999999} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if($ix[colName]<min) { min=$ix[colName]; row=$0 } } END { if(type!="int") { print colName" is Not an Integer!" } else { print "min of "colName" = "min; print row } }' colName=$colName $tablePath 
+    awk -F';'  ' NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i; if(t==colName) {type=a[2]} } } NR>1 { if(NR==2){min=$ix[colName]; row=$0 } else{if($ix[colName]<min) { min=$ix[colName]; row=$0 } }} END { if(type!="int") { print colName" is Not an Integer!" } else { print "min of "colName" = "min; print row } }' colName=$colName $tablePath 
     read -p "Do you want to get min of another column? (Y/N) " input
     if [ $input = Y -o $input = y ]; then
       minSpecificColumn;
     fi
   fi 
+}
+countSpecificColumn() {
+  read -p "Please Enter The Name of Database : " dbName;
+  if [ -d $dbName ]
+    then
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$dbName/$tableName"
+    read -p "Please Enter The Column Name you want to count : " colName;
+    awk -F';'  'NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i;} } END { print "count of "colName" = " NR-1 }' colName=$colName $tablePath 
+    read -p "Do you want to count another column? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      countSpecificColumn;
+    fi
+  fi 
+}
+countSpecificColumnUnderCondition() {
+  read -p "Please Enter The Name of Database : " dbName;
+  if [ -d $dbName ]
+    then
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$dbName/$tableName"
+    read -p "Please Enter The Column Name you want to count : " colName;
+    read -p "Please Enter The Condition : " condition;
+    awk -F';'  'BEGIN {count=0} NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i}} NR>1 {if($ix[colName]==cond) count+=1} END {print "count of "colName" where ("colName"="cond ") is "count}' colName=$colName cond=$condition $tablePath 
+    read -p "Do you want to count another column under condition? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      countSpecificColumnUnderCondition;
+    fi
+  fi
 }  
 deleteFromTable(){
-read -p "Please Enter The Name of Database : " dbName;
-if [ -d $dbName ]
-  then
-  read -p "Please Enter The Name of Table : " tableName;
-  tablePath="$dbName/$tableName"
-  read -p "Please Enter The Column Name : " colName;
-  read -p "Please Enter The Condition : " condition;
-  awk -F';'  'NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i} print $0} NR>1 {if($ix[colName]!=cond) print $0}' colName=$colName cond=$condition $tablePath > $dbName/try
-  rm  $tablePath;
-  mv $dbName/try $dbName/$tableName;
-  read -p "Do you want to delete another row? (Y/N) " input
-  if [ $input = Y -o $input = y ]; then
-    deleteFromTable;
+  read -p "Please Enter The Name of Database : " dbName;
+  if [ -d $dbName ]
+    then
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$dbName/$tableName"
+    read -p "Please Enter The Column Name : " colName;
+    read -p "Please Enter The Condition : " condition;
+    awk -F';'  'NR==1 {for (i=1; i<=NF; i++) {split($i,a,".");t=a[1];ix[t] = i} print $0} NR>1 {if($ix[colName]!=cond) print $0}' colName=$colName cond=$condition $tablePath > $dbName/try
+    rm  $tablePath;
+    mv $dbName/try $dbName/$tableName;
+    read -p "Do you want to delete another record? (Y/N) " input
+    if [ $input = Y -o $input = y ]; then
+      deleteFromTable;
+    fi
   fi
-fi
 }
 dropTable(){
-read -p "Choose Database : " dbName;
-read -p "Please Enter The Name of Table : " tableName;
-rm  $dbName/$tableName;
-echo "Your Table '$dbName.$tableName' is Deleted ";
+  read -p "Choose Database : " dbName;
+  read -p "Please Enter The Name of Table : " tableName;
+  rm  $dbName/$tableName;
+  echo "Your Table '$dbName.$tableName' is Deleted ";
 }
 print(){
-clear
-echo $1;
-echo "Press any key to quit ";
-read confirm;
+  clear
+  echo $1;
+  echo "Press any key to quit ";
+  read confirm;
 }
 
 function dropDatabase (){
-clear
+  clear
 
-read -p "Choose Database : " dbName;
+  read -p "Choose Database : " dbName;
 # rm -r $dbName;
 echo "You are going to drop $dbName Database ,Are you Sure? (Y/N) "
 read confirm
@@ -268,78 +308,77 @@ fi
 }
 
 function insertIntoTable {
-insert="Y"
-while [ $insert = "Y" -o $insert = "y" ]; do
-  clear;
-  newRecord=""
-  read -p "Choose Database : " dbName;
-  read -p "Please Enter The Name of Table : " tableName;
-  tableName="$PWD/$dbName/$tableName"
-  print "Inserting new record in $tableName table"
-  tableHeader=$(head -1 "$tableName");
-  columnsList=$(echo  "$tableHeader" | awk 'BEGIN{RS=";"}; {print}')
-  for col in $columnsList
-  do
-    colType=$(echo "$col" | awk 'BEGIN{FS="."}; NR==1{print $2}')
-    echo -n "$col: "
-    read input
-    if [[ $colType == "int" ]]; then
-      while ! [[ $input =~ ^[0-9] ]]; do
-        echo "Invalid input datatype! enter $colType value";
-        echo -n "$col: "
-        read input
-      done
-    fi
-    PKIndex=$(isPrimaryKey $col);
-    if [[ $PKIndex != "0" ]]; then
-      ChkPK=$(checkPrimaryKey);
-      while [[ $ChkPK == "1" ]]; do
-        echo -en "Primary key value already existed!\n$col: "
-        read input
+  insert="Y"
+  while [ $insert = "Y" -o $insert = "y" ]; do
+    clear;
+    newRecord=""
+    read -p "Choose Database : " dbName;
+    read -p "Please Enter The Name of Table : " tableName;
+    tablePath="$PWD/$dbName/$tableName"
+    print "Inserting new record in $tablePath table"
+    tableHeader=$(head -1 "$tablePath");
+    columnsList=$(echo  "$tableHeader" | awk 'BEGIN{RS=";"}; {print}')
+    for col in $columnsList
+    do
+      colType=$(echo "$col" | awk 'BEGIN{FS="."}; NR==1{print $2}')
+      echo -n "$col: "
+      read input
+      if [[ $colType == "int" ]]; then
+        while ! [[ $input =~ ^[0-9] ]]; do
+          echo "Invalid input datatype! enter $colType value";
+          echo -n "$col: "
+          read input
+        done
+      fi
+      PKIndex=$(isPrimaryKey $col);
+      if [[ $PKIndex != "0" ]]; then
         ChkPK=$(checkPrimaryKey);
-      done
-    fi
-    newRecord="$newRecord$input;"
+        while [[ $ChkPK == "1" ]]; do
+          echo -en "Primary key value already exists!\n$col: "
+          read input
+          ChkPK=$(checkPrimaryKey);
+        done
+      fi
+      newRecord="$newRecord$input;"
+    done
+    echo "${newRecord::-1}" >> "$tablePath";
+    echo -en "Record added successfully!\nInsert another record? [Y/N]: ";
+    read insert;
   done
-  echo "${newRecord::-1}" >> "$tableName";
-  echo -en "Record added successfully!\nInsert another record? [Y/N]: ";
-  read insert;
-done
 }
 function createColumns {
-rowHeader=""
-for (( i = 0; i < $1; i++ )); do
-  newColumn=""
-  echo -n "Column $((i+1)) name: "
-  read newColumn
-  if [[ $rowHeader == *$newColumn* ]]; then
-    echo "column name \"$newColumn\" alreadey existed!";
-    ((i--));
-    continue
+  rowHeader=""
+  for (( i = 0; i < $1; i++ )); do
+    newColumn=""
+    echo -n "Column $((i+1)) name: "
+    read newColumn
+    if [[ $rowHeader == *$newColumn* ]]; then
+      echo "column name \"$newColumn\" alreadey existed!";
+      ((i--));
+      continue
+    fi
+    echo -n "[int OR string]: "
+    read colType
+    if [[ $colType != "int" && $colType != "string" ]]; then
+      echo "Datatype \"$colType\" is not supported!";
+      ((i--));
+      continue
+    fi
+    newColumn="$newColumn.$colType"
+    rowHeader="$rowHeader$newColumn"";"
+  done
+  rowHeader="${rowHeader::-1}";
+  echo "$rowHeader" >> "$tablePath";
+  echo -en "Table created successfully!\nWant to add Primary Key constraint? [Y/N] "
+  read input
+  if [[ $input == "Y" || $input == "y" ]]; then
+    addPrimaryKey;
   fi
-  echo -n "[int OR string]: "
-  read colType
-  if [[ $colType != "int" && $colType != "string" ]]; then
-    echo "Datatype \"$colType\" is not supported!";
-    ((i--));
-    continue
-  fi
-  newColumn="$newColumn.$colType"
-  rowHeader="$rowHeader$newColumn"";"
-done
-rowHeader="${rowHeader::-1}";
-echo "$rowHeader" >> "$tablePath";
-echo -en "Table created successfully!\nWant to add Primary Key constraint? [Y/N] "
-read input
-if [[ $input == "Y" || $input == "y" ]]; then
-  addPrimaryKey;
-fi
 }
 
 function createTable {
-clear;
-read -p "Choose Database : " dbName;
-  #read -p "Please Enter The Name of Table : " tableName;
+  clear;
+  read -p "Choose Database : " dbName;
   print "$dbName : Create New Table"
   echo -n "Enter table name: "
   read tableName;
@@ -372,6 +411,7 @@ read -p "Choose Database : " dbName;
 }
 
 function isPrimaryKey {
+  dbConfig=$dbName"/.config";
   PKName=$(echo $1 | awk 'BEGIN{FS="."}; NR==1{print $1}')
   TableConfig=$(awk -v tbname="$tableName" 'BEGIN{FS=":";TF="0";}; $1==tbname{print $0; TF="1";}; END{if(TF=="0") print "0";}' $dbConfig/$dbName)
   if [[ $TableConfig != "0" ]]; then
@@ -383,6 +423,7 @@ function isPrimaryKey {
 }
 function addPrimaryKey {
   clear;
+  dbConfig=$dbName"/.config";
   pkinput="Y"
   print "Adding primary key to $dbName.$tableName";
   echo $rowHeader | awk 'BEGIN{ RS=";" ; FS="." }{ print "- " $1 }'
@@ -402,6 +443,8 @@ function addPrimaryKey {
   done
 }
 function checkPrimaryKey {
+  dbConfig=$dbName"/.config";
+  tableName=$tablePath;
   PKFound="0";
   PKColumn=($(awk -v pkindex="$PKIndex" 'BEGIN{FS=";"}; {print $pkindex};' $tableName))
   for PK in "${PKColumn[@]}"; do
